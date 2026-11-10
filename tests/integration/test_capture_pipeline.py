@@ -69,6 +69,9 @@ def test_pipeline_streams_and_reconnects_after_unplug() -> None:
         world["unplugged"] = True
         wait_for(lambda: pipe.health()["state"] == "NO_SIGNAL")
         assert pipe.health()["receiving_frames"] is False
+        # Espera o pipeline desistir da fonte e fechá-la; senão uma volta rápida do sinal
+        # é absorvida sem reabrir (comportamento correto, mas não é o que este teste mede).
+        wait_for(lambda: pipe.health()["connected"] is False)
         world["unplugged"] = False
         wait_for(lambda: pipe.health()["state"] == "STREAMING")
         assert pipe.health()["reconnects"] >= 1
