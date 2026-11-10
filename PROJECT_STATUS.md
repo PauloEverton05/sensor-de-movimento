@@ -4,7 +4,9 @@
 
 ## Fase atual
 
-**Fase 3 — Câmeras e captura (+ spike de tela bloqueada)**: 🟡 implementada; **aguardando os testes em hardware** descritos em [docs/TESTE-FASE-3.md](docs/TESTE-FASE-3.md).
+**Fase 3 — Câmeras e captura (+ spike de tela bloqueada)**: 🟡 implementada; **aguardando os testes em hardware** descritos em [docs/TESTE-FASE-3.md](docs/TESTE-FASE-3.md), feitos pelo instalador `v0.2.0-alpha.1` (Menu Iniciar → Sentinel AI).
+
+> **Distribuição: somente Windows 11 x64** (decisão do responsável, 2026-11-09). Linux e macOS continuam compilando e rodando os testes no CI, para não perder a portabilidade da arquitetura, mas não são publicados.
 
 ### Fase 3: critérios de conclusão
 
@@ -99,6 +101,9 @@ Pré-lançamento publicado: [v0.1.0-alpha.1](https://github.com/PauloEverton05/s
 | D19 | Inibição de sono (Windows) antecipada da Fase 8 para a 3 | Pré-requisito do spike de tela bloqueada |
 | D20 | Captura diagnóstica (`capture.*`) separada da vigilância (`surveillance.*`) | Câmera capturando ≠ vídeo gravado; a vigilância só vira ACTIVE com gravação (Fase 4) |
 | D21 | Cofre do SO via `keyring`; `SENTINEL_SECRET_BACKEND=memory` só para testes | Credenciais nunca no banco; o CI Linux não tem cofre |
+| D22 | Distribuição somente Windows 11 x64; Linux/macOS só no CI | Decisão do responsável: testar sem ferramentas de desenvolvimento, só baixando o instalador |
+| D23 | Testes guiados no próprio `sentinel-ctl` + atalhos no Menu Iniciar | O usuário final testa sem terminal nem `uv` |
+| D24 | O CI instala o `setup.exe` em silêncio e roda a fumaça contra a instalação | Nenhum instalador é publicado sem ter sido instalado e executado |
 
 ## Problemas encontrados
 

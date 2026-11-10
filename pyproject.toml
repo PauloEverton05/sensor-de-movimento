@@ -1,6 +1,6 @@
 [project]
 name = "sentinel-ai"
-version = "0.1.0"
+version = "0.2.0"
 description = "SENTINEL AI — central local de vigilância com visão computacional"
 readme = "README.md"
 requires-python = ">=3.12,<3.13"

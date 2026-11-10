@@ -74,7 +74,7 @@ def test_camera_crud_and_capture_with_probe(agent: RunningAgent, sample_video: P
     report = json.loads(r.stdout)
     assert report["verdict"] == "FALHOU"
     assert any("bloqueio contínuo" in x for x in report["reasons"])
-    assert report["cameras"][cam["id"][:8]]["gaps_over_2s"] == []
+    assert report["cameras"]["Teste"]["gaps_over_2s"] == []  # relatório usa o nome da câmera
 
 
 def test_rtsp_credentials_never_exposed(agent: RunningAgent) -> None:

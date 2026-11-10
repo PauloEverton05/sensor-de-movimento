@@ -19,7 +19,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 SUFFIX = ".exe" if sys.platform == "win32" else ""
-OUT = ROOT / "dist" / "sentinel-agent"
+# SENTINEL_DIST_DIR aponta para uma instalação real (scripts/test_installer.py).
+OUT = Path(os.environ.get("SENTINEL_DIST_DIR") or ROOT / "dist" / "sentinel-agent")
 
 
 def _ctl_roundtrip(agent: Path, ctl: Path) -> None:

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import base64
+import contextlib
 import getpass
 import json
 import sys
@@ -80,7 +81,59 @@ def _build_parser() -> argparse.ArgumentParser:
     sn = sub.add_parser("snapshot", help="salva o frame mais recente em JPEG")
     sn.add_argument("--camera-id")
     sn.add_argument("--out", type=Path, default=Path("snapshot.jpg"))
+
+    an = sub.add_parser("analyze", help="analisa uma sonda (padrão: a mais recente)")
+    an.add_argument("probe", nargs="?", type=Path)
+    an.add_argument("--json", action="store_true", help="saída em JSON")
+
+    wt = sub.add_parser("webcam-test", help="teste guiado: fps da webcam (inicia o agente)")
+    wt.add_argument("--seconds", type=int, default=60)
+
+    lt = sub.add_parser("lock-test", help="teste guiado de tela bloqueada (inicia o agente)")
+    lt.add_argument("--minutes", type=int, default=30, help="duração sugerida ao usuário")
+    lt.add_argument("--allow-sleep", action="store_true", help="teste de controle sem inibição")
+    lt.add_argument("--keep-display-on", action="store_true")
+    lt.add_argument("--snapshot-interval", type=float, default=10.0)
     return p
+
+
+def _say(msg: str) -> None:
+    print(msg, flush=True)
+
+
+def _analyze(args: argparse.Namespace, paths: AppPaths) -> int:
+    from sentinel.tools.probe_report import analyze, format_report, latest_probe
+
+    probe = args.probe or latest_probe(paths.data_dir / "diagnostics")
+    if probe is None:
+        print("nenhuma sonda encontrada; rode `sentinel-ctl lock-test` primeiro", file=sys.stderr)
+        return 1
+    report = analyze(probe)
+    print(json.dumps(report, ensure_ascii=False, indent=2) if args.json else format_report(report))
+    return 0 if report["verdict"] == "PASSOU" else 1
+
+
+def _guided(args: argparse.Namespace, paths: AppPaths) -> int:
+    from sentinel.tools import guided
+
+    client, started_here = guided.connect_or_start_agent(paths, args.data_dir, args.timeout, _say)
+    try:
+        if args.cmd == "webcam-test":
+            return guided.webcam_test(client, args.seconds, _say)
+        return guided.lock_test(
+            client,
+            paths,
+            minutes=args.minutes,
+            allow_sleep=args.allow_sleep,
+            keep_display_on=args.keep_display_on,
+            snapshot_interval_s=args.snapshot_interval,
+            say=_say,
+        )
+    finally:
+        if started_here:
+            with contextlib.suppress(AgentUnavailableError, RpcCallError):
+                client.call("system.shutdown")
+        client.close()
 
 
 def _call(args: argparse.Namespace, c: AgentClient) -> Any:
@@ -156,6 +209,17 @@ def _call(args: argparse.Namespace, c: AgentClient) -> Any:
 def main(argv: list[str] | None = None) -> int:
     args = _build_parser().parse_args(argv)
     paths = AppPaths.resolve(args.data_dir)
+    if args.cmd == "analyze":
+        return _analyze(args, paths)
+    if args.cmd in ("webcam-test", "lock-test"):
+        try:
+            return _guided(args, paths)
+        except AgentUnavailableError as exc:
+            print(f"AGENTE INACESSÍVEL: {exc}", file=sys.stderr)
+            return 2
+        except (RpcCallError, RuntimeError) as exc:
+            print(f"\nERRO: {getattr(exc, 'message', exc)}", file=sys.stderr)
+            return 1
     try:
         client = AgentClient.from_runtime(
             paths.ipc_address, paths.token_file, timeout_s=args.timeout

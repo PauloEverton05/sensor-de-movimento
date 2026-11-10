@@ -4,17 +4,22 @@ Central local de vigilância com visão computacional: gravação contínua da w
 câmeras IP, detecção de movimento e de pessoas, catálogo de pessoas autorizadas e
 histórico de eventos. Processamento 100% local.
 
-> **Estado atual: Fase 2 (infraestrutura).** Ainda não há captura de câmera nem gravação.
+> **Estado atual: Fase 3 (captura de câmera).** Já captura webcam e câmeras IP; **ainda não grava vídeo**.
 > Veja [PROJECT_STATUS.md](PROJECT_STATUS.md) e a arquitetura em [docs/ARQUITETURA.md](docs/ARQUITETURA.md).
+
+## Baixar e testar (Windows 11)
+
+1. Em [Releases](https://github.com/PauloEverton05/sensor-de-movimento/releases), baixe o `…-windows11-x64-setup.exe` mais recente.
+2. Instale (não pede administrador). Ao aparecer o aviso do SmartScreen, clique em *Mais informações → Executar assim mesmo*.
+3. Menu Iniciar → **Sentinel AI** → siga o "Como testar".
 
 ## Plataformas
 
 | Plataforma | Situação |
 |---|---|
-| Windows 11 x64 | Plataforma principal de desenvolvimento e teste em hardware |
-| Linux x86_64 | Compila e testa no CI; teste em hardware planejado (pendrive live) |
-| macOS | Compila e testa no CI. **Não suportado** (sem hardware para teste real) |
-| Windows 10, ARM64 | **Não suportado** (sem hardware para teste real) |
+| **Windows 11 x64** | **Única plataforma distribuída** (instalador e portátil) |
+| Linux x86_64 / macOS | Só compilam e rodam os testes no CI; não são distribuídos |
+| Windows 10, ARM64 | Não suportado |
 
 ## Desenvolvimento
 
