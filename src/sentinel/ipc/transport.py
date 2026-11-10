@@ -61,6 +61,8 @@ def create_listener(address: str) -> Listener:
 
 
 def connect(address: str, token: bytes) -> Connection:
-    conn = Client(address, family=family_for_platform(), authkey=token)
     # No Windows é um PipeConnection, com a mesma interface pública de Connection.
+    # O tipo declarado no typeshed muda por plataforma; passar por `object` mantém o
+    # mypy consistente em Windows, Linux e macOS.
+    conn: object = Client(address, family=family_for_platform(), authkey=token)
     return cast(Connection, conn)
