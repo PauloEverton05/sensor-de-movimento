@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+*.egg-info/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Build
+build/
+dist/
+*.spec.bak
+
+# Dados locais e modelos (binários ficam fora do git)
+SENTINEL_DATA/
+models/**/*.onnx
+*.db
+*.db-wal
+*.db-shm
+
+# Mídia gerada em testes
+*.mp4
+*.mp4.partial
+
+# SO / editores
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

@@ -1,0 +1,112 @@
+name: Release
+
+# Tag "v*" → compila nos 3 SOs, roda o teste de fumaça e publica um pré-lançamento.
+# Execução manual → só gera os artefatos (ensaio), sem publicar.
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build (${{ matrix.os }})
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - os: windows-latest
+            label: windows-x64
+          - os: ubuntu-latest
+            label: linux-x64
+          - os: macos-latest
+            label: macos-arm64-NAO-SUPORTADO
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: uv sync --locked
+      - run: uv run pytest -m "not hardware"
+      - run: uv run python scripts/build_agent.py
+      - run: uv run python scripts/smoke_packaged_agent.py
+
+      - name: Versão
+        id: ver
+        shell: bash
+        run: echo "version=$(uv run python -c 'import sentinel; print(sentinel.__version__)')" >> "$GITHUB_OUTPUT"
+
+      - name: Verificar se a tag bate com a versão
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: bash
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          base="${tag%%-*}"
+          if [ "$base" != "${{ steps.ver.outputs.version }}" ]; then
+            echo "Tag $GITHUB_REF_NAME não corresponde à versão ${{ steps.ver.outputs.version }}" >&2
+            exit 1
+          fi
+
+      - name: Instalador Windows (Inno Setup)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          choco install innosetup --no-progress -y
+          & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" `
+            "/DAppVersion=${{ steps.ver.outputs.version }}" `
+            "/DSourceDir=..\..\dist\sentinel-agent" `
+            packaging\windows\sentinel.iss
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Pacote portátil (zip)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force dist/release | Out-Null
+          Copy-Item dist/installer/*.exe dist/release/
+          Compress-Archive -Path dist/sentinel-agent/* `
+            -DestinationPath "dist/release/SentinelAI-${{ steps.ver.outputs.version }}-${{ matrix.label }}-portable.zip"
+
+      - name: Pacote (tar.gz)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          mkdir -p dist/release
+          tar -C dist -czf "dist/release/SentinelAI-${{ steps.ver.outputs.version }}-${{ matrix.label }}.tar.gz" sentinel-agent
+
+      - name: Checksums
+        shell: bash
+        run: |
+          cd dist/release
+          for f in *; do
+            if command -v sha256sum >/dev/null; then sha256sum "$f"; else shasum -a 256 "$f"; fi
+          done > "SHA256SUMS-${{ matrix.label }}.txt"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ matrix.label }}
+          path: dist/release/*
+          retention-days: 14
+
+  publish:
+    name: Publicar pré-lançamento
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: out
+          merge-multiple: true
+      - name: Criar release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" out/* \
+            --prerelease \
+            --title "Sentinel AI $GITHUB_REF_NAME (pré-lançamento)" \
+            --notes-file docs/release-notes/"$GITHUB_REF_NAME".md
