@@ -9,6 +9,9 @@ authors = [{ name = "PauloEverton05" }]
 dependencies = [
     "platformdirs>=4.2",
     "pydantic>=2.7",
+    "numpy>=1.26",
+    "opencv-python-headless>=4.10",
+    "keyring>=25.0",
 ]
 
 [project.scripts]
@@ -44,7 +47,7 @@ ignore = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["S603", "S607", "S108", "S105", "E501"]
+"tests/**" = ["S603", "S607", "S108", "S105", "S106", "E501"]
 "scripts/**" = ["S603", "S607"]
 
 # ---------------------------------------------------------------- mypy
@@ -58,7 +61,8 @@ plugins = ["pydantic.mypy"]
 # ---------------------------------------------------------------- pytest
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "-ra --strict-markers"
+# Testes de hardware (webcam real) nunca rodam por padrão: use `pytest -m hardware`.
+addopts = "-ra --strict-markers -m \"not hardware\""
 markers = [
     "integration: usa processos, SQLite e IPC reais",
     "hardware: exige hardware real (nunca roda no CI)",
@@ -67,7 +71,8 @@ markers = [
 # ---------------------------------------------------------------- import-linter
 # Fronteiras da arquitetura (docs/ARQUITETURA.md §7). Verificado no CI.
 [tool.importlinter]
-root_package = "sentinel"
+root_packages = ["sentinel"]
+include_external_packages = true
 
 [[tool.importlinter.contracts]]
 name = "domain é puro (não depende de nenhuma outra camada)"
@@ -86,3 +91,16 @@ name = "persistence não depende do agente nem do ipc"
 type = "forbidden"
 source_modules = ["sentinel.persistence"]
 forbidden_modules = ["sentinel.agent", "sentinel.ipc"]
+
+[[tool.importlinter.contracts]]
+name = "security não depende do agente, ipc ou persistência"
+type = "forbidden"
+source_modules = ["sentinel.security"]
+forbidden_modules = ["sentinel.agent", "sentinel.ipc", "sentinel.persistence"]
+
+[[tool.importlinter.contracts]]
+name = "ipc não carrega OpenCV/numpy (cliente leve para a interface)"
+type = "forbidden"
+source_modules = ["sentinel.ipc"]
+forbidden_modules = ["cv2", "numpy"]
+allow_indirect_imports = false

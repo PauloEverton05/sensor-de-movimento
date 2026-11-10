@@ -52,6 +52,7 @@ def _ctl_roundtrip(agent: Path, ctl: Path) -> None:
         finally:
             if proc.poll() is None:
                 proc.kill()
+                proc.wait()  # libera os arquivos antes de apagar o diretório temporário
 
 
 def main() -> int:

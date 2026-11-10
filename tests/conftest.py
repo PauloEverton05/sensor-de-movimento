@@ -78,7 +78,26 @@ def start_agent(data_dir: Path, runtime_dir: Path, timeout_s: float = 20.0) -> R
 def runtime_dir(monkeypatch: pytest.MonkeyPatch) -> Iterator[Path]:
     d = _short_runtime_dir()
     monkeypatch.setenv("SENTINEL_RUNTIME_DIR", str(d))
+    # Testes nunca tocam no cofre real do SO (e o CI Linux nem tem um).
+    monkeypatch.setenv("SENTINEL_SECRET_BACKEND", "memory")
     yield d
+
+
+@pytest.fixture(scope="session")
+def sample_video(tmp_path_factory: pytest.TempPathFactory) -> Path:
+    """Vídeo MJPEG de 1 s (160x120 @ 20 fps) gerado com o encoder embutido do OpenCV."""
+    import cv2
+    import numpy as np
+
+    path = tmp_path_factory.mktemp("video") / "sample.avi"
+    writer = cv2.VideoWriter(str(path), cv2.VideoWriter.fourcc(*"MJPG"), 20.0, (160, 120))
+    assert writer.isOpened(), "OpenCV sem encoder MJPEG"
+    for i in range(20):
+        img = np.full((120, 160, 3), i * 12, dtype=np.uint8)
+        cv2.putText(img, str(i), (60, 70), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
+        writer.write(img)
+    writer.release()
+    return path
 
 
 @pytest.fixture

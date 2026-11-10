@@ -13,6 +13,11 @@ Regra: nenhuma dependência GPL/AGPL ou com pesos/modelos de uso não comercial.
 | platformdirs | 4.2 | MIT | Diretórios padrão por SO |
 | pydantic / pydantic-core | 2.7 | MIT | Validação de configuração e mensagens IPC |
 | SQLite (via CPython) | 3.x | Domínio público | Banco de dados |
+| opencv-python-headless | 4.10 | Apache-2.0 | Captura de câmera e visão computacional. **Embute FFmpeg em build LGPL** (decodificação RTSP) |
+| numpy | 1.26 | BSD-3-Clause | Frames de imagem |
+| keyring | 25.0 | MIT | Acesso ao cofre de credenciais do SO |
+| pywin32-ctypes (Windows, via keyring) | — | BSD-3-Clause | Credential Manager |
+| jaraco.classes / jaraco.functools / jaraco.context (via keyring) | — | MIT | Dependências do keyring |
 
 ## Ferramentas de build e desenvolvimento (não distribuídas)
 
@@ -31,7 +36,6 @@ Regra: nenhuma dependência GPL/AGPL ou com pesos/modelos de uso não comercial.
 |---|---|---|
 | FFmpeg (build próprio) | LGPL-2.1+ | Compilar **sem** `--enable-gpl`/`--enable-nonfree`; publicar as flags de configuração |
 | PyAV | BSD-3-Clause | |
-| OpenCV | Apache-2.0 | |
 | ONNX Runtime | MIT | |
 | PySide6 / Qt 6 | LGPL-3.0 | Link dinâmico; permitir a substituição das bibliotecas Qt |
 | YOLOX (modelos) | Apache-2.0 | |

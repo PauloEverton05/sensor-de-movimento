@@ -82,19 +82,36 @@ def migrate(conn: sqlite3.Connection, migrations: list[Migration] | None = None)
         if m.version <= current:
             continue
         log.info("aplicando migração", extra={"version": m.version, "migration": m.name})
-        now_ms = int(time.time() * 1000)
-        script = (
-            "BEGIN IMMEDIATE;\n"
-            f"{m.sql}\n;\n"
-            "INSERT INTO schema_migrations(version, name, applied_at_ms) "
-            f"VALUES ({m.version}, '{m.name}', {now_ms});\n"
-            f"PRAGMA user_version = {m.version};\n"
-            "COMMIT;"
-        )
-        try:
-            conn.executescript(script)
-        except sqlite3.Error as exc:
-            if conn.in_transaction:
-                conn.execute("ROLLBACK")
-            raise MigrationError(f"falha na migração {m.version}_{m.name}: {exc}") from exc
+        _apply(conn, m)
     return schema_version(conn)
+
+
+def _apply(conn: sqlite3.Connection, m: Migration) -> None:
+    # foreign_keys não pode mudar dentro de transação. Desligado, recriar uma tabela
+    # (DROP + RENAME) não dispara ON DELETE CASCADE nas tabelas dependentes; a
+    # integridade é conferida com foreign_key_check antes do COMMIT.
+    conn.execute("PRAGMA foreign_keys=OFF")
+    try:
+        # executescript faria COMMIT implícito de uma transação aberta fora dele;
+        # por isso o BEGIN vai dentro do próprio script.
+        conn.executescript(f"BEGIN IMMEDIATE;\n{m.sql}\n;")
+        violations = conn.execute("PRAGMA foreign_key_check").fetchall()
+        if violations:
+            raise MigrationError(
+                f"migração {m.version}_{m.name} violaria integridade referencial: "
+                f"{[tuple(v) for v in violations[:5]]}"
+            )
+        conn.execute(
+            "INSERT INTO schema_migrations(version, name, applied_at_ms) VALUES (?, ?, ?)",
+            (m.version, m.name, int(time.time() * 1000)),
+        )
+        conn.execute(f"PRAGMA user_version = {int(m.version)}")
+        conn.execute("COMMIT")
+    except (sqlite3.Error, MigrationError) as exc:
+        if conn.in_transaction:
+            conn.execute("ROLLBACK")
+        if isinstance(exc, MigrationError):
+            raise
+        raise MigrationError(f"falha na migração {m.version}_{m.name}: {exc}") from exc
+    finally:
+        conn.execute("PRAGMA foreign_keys=ON")

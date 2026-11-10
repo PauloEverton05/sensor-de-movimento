@@ -4,7 +4,32 @@
 
 ## Fase atual
 
-**Fase 2 — Estrutura do projeto e infraestrutura**: ✅ **concluída em 2026-11-09**. Próxima: Fase 3 (câmeras e captura + spike de tela bloqueada).
+**Fase 3 — Câmeras e captura (+ spike de tela bloqueada)**: 🟡 implementada; **aguardando os testes em hardware** descritos em [docs/TESTE-FASE-3.md](docs/TESTE-FASE-3.md).
+
+### Fase 3: critérios de conclusão
+
+| Critério | Status |
+|---|---|
+| Fontes local / RTSP / arquivo | ✅ (simulado + arquivo real no CI) |
+| Supervisor com isolamento de falhas, reconexão e saúde por câmera | ✅ (testes com fonte simulada) |
+| Credenciais RTSP fora do banco e dos logs | ✅ (teste verifica banco, WAL e logs) |
+| Inibição de sono no Windows | ✅ implementada · ⏳ efeito a validar no teste 6 |
+| fps medido ≥ 95% do nominal na webcam real | ⏳ teste 2 |
+| Reconexão após perda real do dispositivo | ⏳ teste 4 |
+| Câmera IP real (celular) | ⏳ teste 5 |
+| Captura estável por 1 h na webcam real (Windows) | ⏳ coberta pelo teste 6 (30 min) + uma rodada longa |
+| **Spike de tela bloqueada (tela apagada / Modern Standby)** | ⏳ teste 6 |
+| Captura na webcam real em Linux | ⏳ pendrive live (pode ser feito depois do spike) |
+
+### Pendências registradas na Fase 3
+
+- Enumeração de câmeras locais com **ID estável** (símbolo do Media Foundation / `/dev/v4l/by-id`). Hoje o cadastro usa o índice, e trocar webcams USB de porta pode mudar o índice.
+- Inibição de sono e detecção de bloqueio em Linux/macOS (Fase 8).
+- Migração de RTSP para PyAV (remux sem recodificação) na Fase 4, após verificar a licença do FFmpeg embutido.
+
+---
+
+**Fase 2 — Estrutura do projeto e infraestrutura**: ✅ **concluída em 2026-11-09**.
 
 Pré-lançamento publicado: [v0.1.0-alpha.1](https://github.com/PauloEverton05/sensor-de-movimento/releases/tag/v0.1.0-alpha.1) (instalador Windows, zip portátil, Linux e macOS, este último só como build).
 
@@ -14,7 +39,7 @@ Pré-lançamento publicado: [v0.1.0-alpha.1](https://github.com/PauloEverton05/s
 |---|---|
 | 1. Arquitetura | ✅ Aprovada (2026-11-09) |
 | 2. Estrutura e infraestrutura | ✅ Concluída (2026-11-09) |
-| 3. Câmeras e captura (+ spike de tela bloqueada) | Não iniciada |
+| 3. Câmeras e captura (+ spike de tela bloqueada) | 🟡 Implementada; aguardando testes em hardware |
 | 4. Gravação contínua e segmentação | Não iniciada |
 | 5. Detecção de movimento | Não iniciada |
 | 6. IA e detecção de pessoas | Não iniciada |
@@ -69,6 +94,11 @@ Pré-lançamento publicado: [v0.1.0-alpha.1](https://github.com/PauloEverton05/s
 | D14 | Pacote único `src/sentinel` em vez de workspace multi-pacote | Evitar camada sem ganho; fronteiras via import-linter |
 | D15 | IPC sobre `multiprocessing.connection` (stdlib) | Framing + HMAC mútuo nos 3 SOs sem dependência extra |
 | D16 | Token/lock/socket em diretório de execução privado, separado dos dados | Dados podem estar em disco externo com ACL ampla |
+| D17 | Fase 3: RTSP via OpenCV (FFmpeg LGPL embutido); PyAV adiado para a Fase 4 | Evitar adotar o FFmpeg do PyAV antes de verificar a licença |
+| D18 | Estado do link derivado do tempo desde o último frame, e não da thread de leitura | Driver travado dentro do `read()` não pode manter STREAMING falso |
+| D19 | Inibição de sono (Windows) antecipada da Fase 8 para a 3 | Pré-requisito do spike de tela bloqueada |
+| D20 | Captura diagnóstica (`capture.*`) separada da vigilância (`surveillance.*`) | Câmera capturando ≠ vídeo gravado; a vigilância só vira ACTIVE com gravação (Fase 4) |
+| D21 | Cofre do SO via `keyring`; `SENTINEL_SECRET_BACKEND=memory` só para testes | Credenciais nunca no banco; o CI Linux não tem cofre |
 
 ## Problemas encontrados
 
@@ -79,6 +109,8 @@ Pré-lançamento publicado: [v0.1.0-alpha.1](https://github.com/PauloEverton05/s
 | 2026-11-09 | Repositório GitHub público, com produto comercial | ✅ Decisão do responsável: manter público (divulgação). Código *source-available*: proprietário, todos os direitos reservados |
 | 2026-11-09 | mypy falhava só no Linux (tipo de `Client` varia por plataforma no typeshed) | ✅ Corrigido em 409a407. A release v0.1.0-alpha.1 foi gerada de c5ef571, funcionalmente idêntico |
 | 2026-11-09 | Named Pipe usa o descritor de segurança padrão do Windows (proteção atual: token HMAC) | Planejado: DACL restrita ao usuário na Fase 10 |
+| 2026-11-09 | `sentinel-ctl` deixou de aceitar `--data-dir` depois do subcomando (detectado pelo teste de fumaça do binário) | ✅ Corrigido + teste |
+| 2026-11-09 | Recriar tabela no SQLite com `foreign_keys=ON` apagaria `camera_settings` em cascata | ✅ Migrador desliga FKs por migração e roda `foreign_key_check` antes do COMMIT + teste |
 
 ## Testes realizados
 
@@ -89,6 +121,8 @@ Pré-lançamento publicado: [v0.1.0-alpha.1](https://github.com/PauloEverton05/s
 | 2026-11-09 | Windows 11 | ruff, ruff format, mypy --strict, lint-imports | ✅ |
 | 2026-11-09 | GitHub Actions: Windows, Ubuntu, macOS arm64 | testes + build + fumaça do binário | ✅ |
 | 2026-11-09 | GitHub Actions: Windows | geração do instalador Inno Setup | ✅ (instalação em máquina real ainda não testada) |
+| 2026-11-09 | Windows 11 (código-fonte) | Fase 3: unit + integration (81) | 80 ✅, 1 pulado |
+| 2026-11-09 | Windows 11 (binário PyInstaller com OpenCV) | integration (17) + `sentinel-ctl` | ✅ |
 
 ## Hardware de teste
 
