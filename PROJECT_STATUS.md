@@ -4,15 +4,16 @@
 
 ## Fase atual
 
-**Fase 2 — Estrutura do projeto e infraestrutura**: implementada e validada no Windows 11.
-**Falta para concluir:** CI verde nos 3 SOs, o que exige enviar o código ao GitHub (veja "Problemas encontrados").
+**Fase 2 — Estrutura do projeto e infraestrutura**: ✅ **concluída em 2026-11-09**. Próxima: Fase 3 (câmeras e captura + spike de tela bloqueada).
+
+Pré-lançamento publicado: [v0.1.0-alpha.1](https://github.com/PauloEverton05/sensor-de-movimento/releases/tag/v0.1.0-alpha.1) (instalador Windows, zip portátil, Linux e macOS, este último só como build).
 
 ## Fases
 
 | Fase | Status |
 |---|---|
 | 1. Arquitetura | ✅ Aprovada (2026-11-09) |
-| 2. Estrutura e infraestrutura | 🟡 Implementada; aguardando CI em Linux/macOS |
+| 2. Estrutura e infraestrutura | ✅ Concluída (2026-11-09) |
 | 3. Câmeras e captura (+ spike de tela bloqueada) | Não iniciada |
 | 4. Gravação contínua e segmentação | Não iniciada |
 | 5. Detecção de movimento | Não iniciada |
@@ -35,8 +36,8 @@
 | Esqueleto IPC (hello/ping/status/shutdown) com autenticação | ✅ |
 | Agente com instância única e detecção de parada não limpa | ✅ |
 | Agente empacotado (PyInstaller) responde a `status` — Windows 11 | ✅ local |
-| Agente empacotado responde a `status` — Linux / macOS | ⏳ CI pendente |
-| CI verde nos 3 SOs | ⏳ pendente de push |
+| Agente empacotado responde a `status` — Linux / macOS | ✅ CI |
+| CI verde nos 3 SOs | ✅ (run 42725329497) |
 
 ## Funcionalidades concluídas
 
@@ -75,7 +76,8 @@
 |---|---|---|
 | 2026-11-09 | Redação de log vazava parte de senhas que contêm `@` (`rtsp://u:abc@!@host`) | ✅ Corrigido (regex gulosa até o último `@`) + teste |
 | 2026-11-09 | No Windows o `python.exe` do venv é um lançador: o PID do processo filho difere do `Popen.pid` | ✅ Teste ajustado (só afeta execução pelo código-fonte) |
-| 2026-11-09 | **Repositório GitHub `PauloEverton05/sensor-de-movimento` está PÚBLICO**, o que conflita com o produto ser fechado | ⏳ Decisão do responsável antes do primeiro push |
+| 2026-11-09 | Repositório GitHub público, com produto comercial | ✅ Decisão do responsável: manter público (divulgação). Código *source-available*: proprietário, todos os direitos reservados |
+| 2026-11-09 | mypy falhava só no Linux (tipo de `Client` varia por plataforma no typeshed) | ✅ Corrigido em 409a407. A release v0.1.0-alpha.1 foi gerada de c5ef571, funcionalmente idêntico |
 | 2026-11-09 | Named Pipe usa o descritor de segurança padrão do Windows (proteção atual: token HMAC) | Planejado: DACL restrita ao usuário na Fase 10 |
 
 ## Testes realizados
@@ -85,6 +87,8 @@
 | 2026-11-09 | Windows 11 Pro 26200, Python 3.12.14 (código-fonte) | unit + integration (51) | 50 ✅, 1 pulado (específico de Unix) |
 | 2026-11-09 | Windows 11 Pro 26200, binário PyInstaller | integration (8) | 8 ✅ |
 | 2026-11-09 | Windows 11 | ruff, ruff format, mypy --strict, lint-imports | ✅ |
+| 2026-11-09 | GitHub Actions: Windows, Ubuntu, macOS arm64 | testes + build + fumaça do binário | ✅ |
+| 2026-11-09 | GitHub Actions: Windows | geração do instalador Inno Setup | ✅ (instalação em máquina real ainda não testada) |
 
 ## Hardware de teste
 
@@ -98,8 +102,8 @@
 | Plataforma | Build | Instalação | Webcam | Câmera IP | Bloqueio (tela ligada) | Bloqueio (tela apagada) | Reinício | 24 h | Consumo |
 |---|---|---|---|---|---|---|---|---|---|
 | Windows 11 x64 | ✅ (agente Fase 2) | — | — | — | — | — | — | — | — |
-| Ubuntu 24.04 x64 (pendrive) | ⏳ CI | — | — | — | — | — | — | — | — |
-| macOS arm64 | ⏳ CI (só build) | ❌ não suportado | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Ubuntu x64 | ✅ CI (agente Fase 2); hardware ⏳ | — | — | — | — | — | — | — | — |
+| macOS arm64 | ✅ CI (só build) | ❌ não suportado | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | Windows 10 | ❌ não suportado (sem hardware) | | | | | | | | |
 | ARM64 (Win/Linux) | ❌ não suportado (sem hardware) | | | | | | | | |
 
