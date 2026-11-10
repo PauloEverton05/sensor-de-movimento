@@ -53,6 +53,8 @@ jobs:
           $v = "${{ steps.ver.outputs.version }}"
           New-Item -ItemType Directory -Force dist/release | Out-Null
           Copy-Item dist/installer/*-setup.exe dist/release/
+          # Nome fixo: o link releases/latest/download/SentinelAI-Setup.exe nunca muda.
+          Copy-Item dist/installer/*-setup.exe dist/release/SentinelAI-Setup.exe
           Copy-Item docs/TESTE-FASE-3.md dist/sentinel-agent/COMO-TESTAR.txt
           Compress-Archive -Path dist/sentinel-agent/* `
             -DestinationPath "dist/release/SentinelAI-$v-windows11-x64-portable.zip"
@@ -83,7 +85,8 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          # Marcada como "latest" (e não prerelease) para o link de download direto funcionar.
           gh release create "$GITHUB_REF_NAME" out/* \
-            --prerelease \
+            --latest \
             --title "Sentinel AI $GITHUB_REF_NAME (pré-lançamento, Windows 11)" \
             --notes-file docs/release-notes/"$GITHUB_REF_NAME".md

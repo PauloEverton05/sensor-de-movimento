@@ -9,7 +9,7 @@ histórico de eventos. Processamento 100% local.
 
 ## Baixar e testar (Windows 11)
 
-1. Em [Releases](https://github.com/PauloEverton05/sensor-de-movimento/releases), baixe o `…-windows11-x64-setup.exe` mais recente.
+1. **[⬇ Baixar o instalador (Windows 11)](https://github.com/PauloEverton05/sensor-de-movimento/releases/latest/download/SentinelAI-Setup.exe)**. O link sempre baixa a versão mais recente.
 2. Instale (não pede administrador). Ao aparecer o aviso do SmartScreen, clique em *Mais informações → Executar assim mesmo*.
 3. Menu Iniciar → **Sentinel AI** → siga o "Como testar".
 
